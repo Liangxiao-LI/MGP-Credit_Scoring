@@ -13,4 +13,4 @@ Develop a statistical model/algorithm which accurately predicts the probability 
 
 The dataset contains 10 columns, two of which contain NA values: NumberOfDependents contains 3924 NA entries and Monthly Income contains 29731 NA entries. Therefore we implement the imputation method to fill in the NA values based on the random forest model and XGB model. The pipeline is explained in the following image.
 
-<img width="1000" alt="Screenshot 2024-02-10 at 11 17 24 PM" src="https://github.com/BL-Starlord/MGP-Credit_Scoring/assets/81414955/675fb558-4790-45ef-9e67-572a4b1f2952">
+<img width="1000" alt="Screenshot 2024-02-14 at 10 14 02 AM" src="https://github.com/BL-Starlord/MGP-Credit_Scoring/assets/81414955/0321e632-63f4-424a-8dca-3e2f355529ee">
