@@ -3,8 +3,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+#!Row10 change input dataset, Row65 change randomforest hyperparameter, Row 141 change XGB hyperparameter
+
 # Load the CSV data into a DataFrame
-df = pd.read_csv('data.csv')
+#!Change this part to modify the imput csv file
+#df = pd.read_csv('data.csv')
+df = pd.read_excel('CleanedData4.xlsx', engine='openpyxl')
 
 # Rename the first column to "Index"
 df.rename(columns={df.columns[0]: "Index"}, inplace=True)
@@ -175,4 +179,8 @@ missing_values = df_complete_ordered.isna().sum()
 print(missing_values)
 
 df_3 = df_complete_ordered
+# %%
+
+# Assuming df_3 is your DataFrame
+df_3.to_excel("Imputed_Cleaneddata4.xlsx", index=True)
 # %%
