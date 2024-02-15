@@ -12,8 +12,11 @@ Develop a statistical model/algorithm which accurately predicts the probability 
 ![Static Badge](https://img.shields.io/badge/Contributors-blue?style=plastic&logoColor=blue)
 
 Data preprocessing: Jemma Moseley,Asiyah Sharif
+
 Missing value Imputation: Liangxiao LI
+
 Feature engineering: Binghan Shang
+
 Prediction model: Troy Campbell
 
 ![Static Badge](https://img.shields.io/badge/Imputation%20NA-red)
