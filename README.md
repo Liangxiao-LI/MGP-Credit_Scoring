@@ -9,6 +9,13 @@ Credit scoring is a tool used by lenders (e.g. banks) to help decide whether one
 
 Develop a statistical model/algorithm which accurately predicts the probability of a default on a loan based on data available to investors. Which attributes are more useful in making such predictions?
 
+![Static Badge](https://img.shields.io/badge/Contributors-blue?style=plastic&logoColor=blue)
+
+Data preprocessing: Jemma Moseley,Asiyah Sharif
+Missing value Imputation: Liangxiao LI
+Feature engineering: Binghan Shang
+Prediction model: Troy Campbell
+
 ![Static Badge](https://img.shields.io/badge/Imputation%20NA-red)
 
 The dataset contains 10 columns, two of which contain NA values: NumberOfDependents contains 3924 NA entries and Monthly Income contains 29731 NA entries. Therefore we implement the imputation method to fill in the NA values based on the random forest model and XGB model. The pipeline is explained in the following image.
