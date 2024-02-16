@@ -7,8 +7,8 @@ import seaborn as sns
 
 # Load the CSV data into a DataFrame
 #!Change this part to modify the imput csv file
-#df = pd.read_csv('data.csv')
-df = pd.read_excel('CleanedData4.xlsx', engine='openpyxl')
+df = pd.read_csv('data.csv')
+#df = pd.read_excel('CleanedData4.xlsx', engine='openpyxl')
 
 # Rename the first column to "Index"
 df.rename(columns={df.columns[0]: "Index"}, inplace=True)
@@ -180,7 +180,10 @@ print(missing_values)
 
 df_3 = df_complete_ordered
 # %%
+df_3['SeriousDlqin2yrs'] = df['SeriousDlqin2yrs']
 
-# Assuming df_3 is your DataFrame
-df_3.to_excel("Imputed_Cleaneddata4.xlsx", index=True)
-# %%
+new_order =  [col for col in df]
+
+df_3 = df_3[new_order]
+
+df_3.to_excel("Imputed_data.xlsx", index=False)
