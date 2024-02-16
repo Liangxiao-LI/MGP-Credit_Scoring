@@ -3,21 +3,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-#!Row10 change input dataset, Row65 change randomforest hyperparameter, Row 141 change XGB hyperparameter
-
+#!Row65 change randomforest hyperparameter
+#!Row 141 change XGB hyperparameter
 #%% Input/Output modification
 
 #The filename for the data
-inputfile = 'data.csv'
+inputfile = 'CleanedData4.xlsx'
 #The file name to store the xbg regressor after training
-regressor_filename = 'xgb_regressor_1.joblib'
+regressor_filename = 'xgb_regressor_CleanedData4.joblib'
 #The file name to store the parameter used for training
-xgb_train_parameter_filename = 'xgb_train_parameter_1.joblib'
+xgb_train_parameter_filename = 'xgb_train_parameter_CleanedData4.joblib'
+#Imputed data filename
+imputeddata_filename =  "Imputed_Cleaneddata4.xlsx" 
 
 #%%
-
-# Load the CSV data into a DataFrame
-#!Change this part to modify the imput csv file
+# Load the original data into a DataFrame
 if inputfile.split('.')[-1] == 'csv':
     df = pd.read_csv(inputfile)
 else:
@@ -26,7 +26,7 @@ else:
 # Rename the first column to "Index"
 df.rename(columns={df.columns[0]: "Index"}, inplace=True)
 
-#%%
+#%% Exploratory analysis
 # Check for missing values in each column
 missing_values = df.isna().sum()
 print(missing_values)
@@ -162,7 +162,7 @@ param_grid = {
 }
 
 #! max_depth: Maximum Depth of a Tree: The depth of a tree is the length of the longest path from the root node down to a leaf node. A tree with a depth of 3 means that there are at most three levels of nodes, including the root node.
-#! 
+#! The colsample_bytree parameter in XGBoost is a hyperparameter that specifies the fraction of features (columns) to be randomly sampled for each tree. Before constructing each tree in the model, XGBoost randomly selects a subset of the features based on the colsample_bytree value. This is part of the model's built-in feature selection method to prevent overfitting and to add more randomness to the model fitting process.
 
 grid_search = GridSearchCV(
     estimator=xgb.XGBRegressor(objective='reg:squarederror', random_state=42),
@@ -252,6 +252,6 @@ new_order =  [col for col in df]
 
 df_3 = df_3[new_order]
 
-df_3.to_excel("Imputed_data.xlsx", index=False)
+df_3.to_excel(imputeddata_filename, index=False)
 
 # %%
