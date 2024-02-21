@@ -6,18 +6,22 @@ import seaborn as sns
 #!Row65 change randomforest hyperparameter
 #!Row 141 change XGB hyperparameter
 #%% Input/Output modification
-
+#! Change all these before running the code
 #The filename for the data
 inputfile = 'CleanedData4.xlsx'
-#The file name to store the xbg regressor after training
-regressor_filename = 'xgb_regressor_CleanedData4.joblib'
-#The file name to store the parameter used for training
-xgb_train_parameter_filename = 'xgb_train_parameter_CleanedData4.joblib'
+#The file name to store the xbg regressor for NumberOfDependents imputation
+regressor_NOD_filename = 'xgb_regressor_NOD_CleanedData4.joblib'
+#The file name to store the parameter used for NumberOfDependents imputation
+xgb_train_parameter_NOD_filename = 'xgb_train_parameter_NOD_CleanedData4.joblib'
+#The file name to store the xbg regressor after Monthly Income imputation
+regressor_MI_filename = 'xgb_regressor_MI_CleanedData4.joblib'
+#The file name to store the parameter used for Monthly Income imputation
+xgb_train_parameter_MI_filename = 'xgb_train_parameter_MI_CleanedData4.joblib'
 #Imputed data filename
 imputeddata_filename =  "Imputed_Cleaneddata4.xlsx" 
 
-#%%
-# Load the original data into a DataFrame
+#%% Load the original data into a DataFrame
+
 if inputfile.split('.')[-1] == 'csv':
     df = pd.read_csv(inputfile)
 else:
@@ -68,28 +72,82 @@ df_missing_dependents = df_1[df_1['NumberOfDependents'].isna()]
 #! The hyperparameter is random_state
 
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.model_selection import GridSearchCV
 
-# Assuming df_with_dependents is your DataFrame ready for modeling
+import xgboost as xgb
+from joblib import load,dump #?used for saving model hyperparameters
+
+#%% Load previously trained model
+xgb_regressor_prev = load(regressor_NOD_filename)
+
+xgb_best_parameters = load(xgb_train_parameter_NOD_filename)
+
+print(f"The hyperparameters for the previous model are: {xgb_best_parameters}")
+
+#%% xgb model training
+
 X = df_with_dependents.drop(['NumberOfDependents','Index'], axis=1)  # Features
 y = df_with_dependents['NumberOfDependents']  # Target
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=45)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
-# Initialize and train the Random Forest model
-rf_model = RandomForestRegressor(random_state=45)
-rf_model.fit(X_train, y_train)
+param_grid = {
+    'n_estimators': [400,500],
+    'learning_rate': [0.01],
+    'max_depth': [3, 5],
+    'colsample_bytree': [ 0.8,1.0],
+    'subsample': [0.6, 0.7]
+}
 
-# Predict on the test set
-y_pred = rf_model.predict(X_test)
+#! max_depth: Maximum Depth of a Tree: The depth of a tree is the length of the longest path from the root node down to a leaf node. A tree with a depth of 3 means that there are at most three levels of nodes, including the root node.
+#! The colsample_bytree parameter in XGBoost is a hyperparameter that specifies the fraction of features (columns) to be randomly sampled for each tree. Before constructing each tree in the model, XGBoost randomly selects a subset of the features based on the colsample_bytree value. This is part of the model's built-in feature selection method to prevent overfitting and to add more randomness to the model fitting process.
 
-# Evaluate the model
-#! can be modified
+grid_search = GridSearchCV(
+    estimator=xgb.XGBRegressor(objective='reg:squarederror', random_state=42),
+    param_grid=param_grid,
+    scoring='neg_mean_squared_error',
+    cv=3,
+    verbose=2,
+    n_jobs=-1
+)
+
+#%%grid_search fit
+
+grid_search.fit(X_train, y_train)
+
+#%% New model Best parameter set
+print("Best Hyper-parameters for training: ", grid_search.best_params_)
+xgb_regressor =  grid_search.best_estimator_
+#%% Model prediction
+
+y_pred = xgb_regressor.predict(X_test) #New model
+y_pred_prev = xgb_regressor_prev.predict(X_test) #Old model
+
+#%%
+# Compare two models
 mse = mean_squared_error(y_test, y_pred)
-print(f'Mean Squared Error: {mse}')
+mae = mean_absolute_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f'New Model Mean Squared Error: {mse}')
+print("New Model Mean Absolute Error:", mae)
+print("New Model R-squared:", r2)
 
+mse = mean_squared_error(y_test, y_pred_prev)
+mae = mean_absolute_error(y_test, y_pred_prev)
+r2 = r2_score(y_test, y_pred_prev)
+print(f'Old Model Mean Squared Error: {mse}')
+print("Old Model Mean Absolute Error:", mae)
+print("Old Model R-squared:", r2)
+
+
+#%% save the trained model
+
+# Save the model
+#dump(xgb_regressor, regressor_NOD_filename)
+# Save the best parameters
+#dump(grid_search.best_params_, xgb_train_parameter_NOD_filename)
 
 # %% 
 
@@ -98,7 +156,7 @@ print(f'Mean Squared Error: {mse}')
 X_missing = df_missing_dependents.drop(['NumberOfDependents','Index'], axis=1)
 
 # Use the trained model to predict 'NumberOfDependents' for the missing values dataset
-predicted_dependents = rf_model.predict(X_missing)
+predicted_dependents = xgb_regressor.predict(X_missing)
 
 # You can then add these predictions back to df_missing_dependents if you want to fill the missing values
 df_missing_dependents['NumberOfDependents'] = predicted_dependents
@@ -126,32 +184,28 @@ df_incomplete_ordered['MonthlyIncome'] = df.set_index('Index')['MonthlyIncome'].
 
 df_2 = df_incomplete_ordered
 
-#%% apply xgb to 
-import xgboost as xgb
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from sklearn.model_selection import GridSearchCV
-#! the hyperparameters are objective, n_estimators, learning_rate, random_state
-
 # %% Seperate the dataset with dependents unknown and dependents known
 
-# DataFrame with rows where MonthlyIncome is not NA
-df_with_MonthlyIncome = df_2.dropna(subset=['MonthlyIncome'])
-#missing_values = df_with_dependents.isna().sum()
-#print(missing_values)
-
-# DataFrame with rows where MonthlyIncome is NA
-df_missing_MonthlyIncome = df_2[df_2['MonthlyIncome'].isna()]
-#missing_values = df_missing_dependents.isna().sum()
-#print(missing_values)
+df_with_MonthlyIncome = df_2.dropna(subset=['MonthlyIncome']) # DataFrame with rows where MonthlyIncome is not NA
+df_missing_MonthlyIncome = df_2[df_2['MonthlyIncome'].isna()] # DataFrame with rows where MonthlyIncome is NA
 
 #Seperate X and Y for model training
-
 X = df_with_MonthlyIncome.drop(['MonthlyIncome','Index'], axis=1)  # Features
 y = df_with_MonthlyIncome['MonthlyIncome']  # Target
+
+#%% Load previously trained model
+xgb_regressor_prev = load(regressor_MI_filename)
+xgb_best_parameters = load(xgb_train_parameter_MI_filename)
+
+print(f"The hyperparameters for the previous model are: {xgb_best_parameters}")
+
+
 
 #%% xgb model training
 # Splitting the data with known MonthlyIncome for training and validation
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+y_pred_prev = xgb_regressor_prev.predict(X_test)
 
 param_grid = {
     'n_estimators': [100, 500, 1000],
@@ -177,44 +231,35 @@ grid_search = GridSearchCV(
 
 grid_search.fit(X_train, y_train)
 
-#%%
-
-# Best parameter set
-print("Best parameters found: ", grid_search.best_params_)
-
+#%% Best parameter set
+print("Best Hyper-parameters for training: ", grid_search.best_params_)
 xgb_regressor =  grid_search.best_estimator_
 
-# Predict on the test set
+#%% Predict on the test set
 y_pred = xgb_regressor.predict(X_test)
 
-# Evaluate the model
+#%%
+# Evaluate the trained model
 mse = mean_squared_error(y_test, y_pred)
-print(f'Mean Squared Error: {mse}')
-
-# Calculate Mean Absolute Error
 mae = mean_absolute_error(y_test, y_pred)
-print("Mean Absolute Error:", mae)
-
-# Calculate R-squared
 r2 = r2_score(y_test, y_pred)
-print("R-squared:", r2)
-#%% save the parameters
+print(f'New Model Mean Squared Error: {mse}')
+print("New Model Mean Absolute Error:", mae)
+print("New Model R-squared:", r2)
 
-from joblib import dump
+mse = mean_squared_error(y_test, y_pred_prev)
+mae = mean_absolute_error(y_test, y_pred_prev)
+r2 = r2_score(y_test, y_pred_prev)
+print(f'Old Model Mean Squared Error: {mse}')
+print("Old Model Mean Absolute Error:", mae)
+print("Old Model R-squared:", r2)
+#%% save the parameters 
+#! only save it if you are 100% sure it's better than previous model
 # Save the model
-dump(xgb_regressor, regressor_filename)
+#dump(xgb_regressor, regressor_MI_filename)
 # Save the best parameters
-dump(grid_search.best_params_, xgb_train_parameter_filename)
+#dump(grid_search.best_params_, xgb_train_parameter_MI_filename)
 
-#%% Apply previously trained model
-
-#from joblib import load
-
-# Load the model
-#xgb_regressor = load('xgb_regressor.joblib')
-
-# Load the best parameters
-#best_params = load('best_params.joblib')
 
 
 # %% 
