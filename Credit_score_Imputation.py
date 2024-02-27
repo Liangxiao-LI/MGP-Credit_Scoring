@@ -6,17 +6,17 @@ import numpy as np
 #%% Input/Output modification
 #! Change all these before running the code
 #The filename for the data
-inputfile = 'CleanedData4.xlsx'
+inputfile = 'Final_Filtered_DataV2.xlsx'
 #The file name to store the xbg regressor for NumberOfDependents imputation
-regressor_NOD_filename = 'xgb_regressor_NOD_CleanedData4.joblib'
+regressor_NOD_filename = 'xgb_regressor_NOD_V2.joblib'
 #The file name to store the parameter used for NumberOfDependents imputation
-xgb_train_parameter_NOD_filename = 'xgb_train_parameter_NOD_CleanedData4.joblib'
+xgb_train_parameter_NOD_filename = 'xgb_train_parameter_NOD_V2.joblib'
 #The file name to store the xbg regressor after Monthly Income imputation
-regressor_MI_filename = 'xgb_regressor_MI_CleanedData4.joblib'
+regressor_MI_filename = 'xgb_regressor_MI_V2.joblib'
 #The file name to store the parameter used for Monthly Income imputation
-xgb_train_parameter_MI_filename = 'xgb_train_parameter_MI_CleanedData4.joblib'
+xgb_train_parameter_MI_filename = 'xgb_train_parameter_MI_V2.joblib'
 #Imputed data filename
-imputeddata_filename =  "Imputed_Cleaneddata4.xlsx" 
+imputeddata_filename =  "Imputed_V2.xlsx" 
 
 #%% Load the original data into a DataFrame
 
@@ -60,7 +60,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.model_selection import GridSearchCV
 import xgboost as xgb
 from joblib import load,dump #?used for saving model hyperparameters
-
+#! 从这开始仔细看
 #%% Load previously trained model
 xgb_regressor_prev = load(regressor_NOD_filename)
 
@@ -69,26 +69,30 @@ xgb_best_parameters = load(xgb_train_parameter_NOD_filename)
 print(f"The hyperparameters for the previous model are: {xgb_best_parameters}")
 
 #%% xgb model training
-
+#! 保证这边的hyperparameter 包含之前最好的参数
 X = df_with_dependents.drop(['NumberOfDependents','Index'], axis=1)  # Features
-y = df_with_dependents['NumberOfDependents']  # Target
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+y = (df_with_dependents['NumberOfDependents'])  # Target
+#y[y <= 0] = 0.0001 # replace all values that are 0 into 0.01
+#y = np.log(y)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=13)
 
 param_grid = {
-    'n_estimators': [500],
+    'n_estimators': [600,700,800],
     'learning_rate': [0.01],
-    'max_depth': [3],
+    'max_depth': [5],
     'colsample_bytree': [ 0.8],
-    'subsample': [0.6]
+    'subsample': [0.4]
 }
 
+#? Previous parameter_grid
 #param_grid = {
-#    'n_estimators': [400,500],
-#    'learning_rate': [0.01],
-#    'max_depth': [3, 5],
-#    'colsample_bytree': [ 0.8,1.0],
-#    'subsample': [0.6, 0.7]
+#    'n_estimators': [400,500,600],
+#    'learning_rate': [0.01,0.05],
+#    'max_depth': [4,5,6,7],
+#    'colsample_bytree': [ 0.4,0.6,0.8],
+#    'subsample': [0.6,0.4,0.5]
 #}
 
 #! max_depth: Maximum Depth of a Tree: The depth of a tree is the length of the longest path from the root node down to a leaf node. A tree with a depth of 3 means that there are at most three levels of nodes, including the root node.
@@ -98,7 +102,7 @@ grid_search = GridSearchCV(
     estimator=xgb.XGBRegressor(objective='reg:squarederror', random_state=42),
     param_grid=param_grid,
     scoring='neg_mean_squared_error',
-    cv=3,
+    cv=6,
     verbose=2,
     n_jobs=-1
 )
@@ -133,11 +137,11 @@ print("Old Model R-squared:", r2)
 
 
 #%% save the trained model
-xgb_regressor = xgb_regressor_prev # use previous model
+#xgb_regressor = xgb_regressor_prev # use previous model
 # Save the model
-#dump(xgb_regressor, regressor_NOD_filename)
+dump(xgb_regressor, regressor_NOD_filename)
 # Save the best parameters
-#dump(grid_search.best_params_, xgb_train_parameter_NOD_filename)
+dump(grid_search.best_params_, xgb_train_parameter_NOD_filename)
 
 #%% Prepare df_missing_dependents for prediction
 
@@ -145,7 +149,7 @@ xgb_regressor = xgb_regressor_prev # use previous model
 X_missing = df_missing_dependents.drop(['NumberOfDependents','Index'], axis=1)
 
 # Use the trained model to predict 'NumberOfDependents' for the missing values dataset
-predicted_dependents = xgb_regressor.predict(X_missing)
+predicted_dependents = np.exp(xgb_regressor.predict(X_missing))
 
 # You can then add these predictions back to df_missing_dependents if you want to fill the missing values
 df_missing_dependents['NumberOfDependents'] = predicted_dependents
@@ -190,10 +194,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 param_grid = {
     'n_estimators': [500],
-    'learning_rate': [0.01],
-    'max_depth': [5],
-    'colsample_bytree': [ 1.0],
-    'subsample': [0.7]
+    'learning_rate': [0.01,0.03],
+    'max_depth': [3,5],
+    'colsample_bytree': [ 0.8,1.0],
+    'subsample': [0.7,0.8]
 }
 
 #param_grid = {
@@ -286,6 +290,9 @@ df_3['SeriousDlqin2yrs'] = df['SeriousDlqin2yrs']
 new_order =  [col for col in df]
 
 df_3 = df_3[new_order]
+
+# Replace all values equal to 0.01 with 0 in the 'NumberOfDependents' column of df_3
+df_3['NumberOfDependents'] = df_3['NumberOfDependents'].replace(0.01, 0)
 
 df_3.to_excel(imputeddata_filename, index=False)
 
