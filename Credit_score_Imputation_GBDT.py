@@ -60,6 +60,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.model_selection import GridSearchCV
 import xgboost as xgb
 from joblib import load,dump #?used for saving model hyperparameters
+from sklearn.ensemble import GradientBoostingRegressor
+
 #! 从这开始仔细看
 #%% Load previously trained model
 xgb_regressor_prev = load(regressor_NOD_filename)
@@ -155,7 +157,6 @@ predicted_dependents = np.exp(xgb_regressor.predict(X_missing))
 df_missing_dependents['NumberOfDependents'] = predicted_dependents
 
 # Now df_missing_dependents contains the predicted values for 'NumberOfDependents'
-
 df_imputed = df_missing_dependents
 
 # %% now put the imputed values back into df
@@ -295,5 +296,41 @@ df_3 = df_3[new_order]
 df_3['NumberOfDependents'] = df_3['NumberOfDependents'].replace(0.01, 0)
 
 df_3.to_excel(imputeddata_filename, index=False)
+
+# %%
+
+
+
+# %%
+
+class ListNode: 
+        def __init__(self, val=0,next = None):
+                self.val = val
+                self.next = next
+
+head = ListNode(1,ListNode(2,ListNode(3,ListNode(4))))
+
+#1 第一串
+dummy = ListNode(0)
+dummy.next = head
+cur = dummy
+
+#1 check 第一串
+print(dummy == cur)
+print(dummy == head)
+print(head.val)
+print(dummy.next == head)
+
+#2 
+first = cur.next
+second = cur.next.next
+first.next = second.next
+second.next = first
+
+print(cur == dummy)
+print(second.next == first)
+print(second.val)
+print(cur.next == first)
+
 
 # %%
