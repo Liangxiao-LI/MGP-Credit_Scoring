@@ -8,13 +8,13 @@ import numpy as np
 #The filename for the data
 inputfile = 'Final_Filtered_DataV2.xlsx'
 #The file name to store the xbg regressor for NumberOfDependents imputation
-regressor_NOD_filename = 'xgb_regressor_NOD_V2.joblib'
+regressor_NOD_filename = 'GBDT_regressor_NOD_V2.joblib'
 #The file name to store the parameter used for NumberOfDependents imputation
-xgb_train_parameter_NOD_filename = 'xgb_train_parameter_NOD_V2.joblib'
+GBDT_train_parameter_NOD_filename = 'GBDT_train_parameter_NOD_V2.joblib'
 #The file name to store the xbg regressor after Monthly Income imputation
-regressor_MI_filename = 'xgb_regressor_MI_V2.joblib'
+regressor_MI_filename = 'XGB_regressor_MI_V2.joblib'
 #The file name to store the parameter used for Monthly Income imputation
-xgb_train_parameter_MI_filename = 'xgb_train_parameter_MI_V2.joblib'
+GBDT_train_parameter_MI_filename = 'XGB_train_parameter_MI_V2.joblib'
 #Imputed data filename
 imputeddata_filename =  "Imputed_V2.xlsx" 
 
@@ -58,19 +58,19 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.model_selection import GridSearchCV
-import xgboost as xgb
+#import xgboost as xgb
 from joblib import load,dump #?used for saving model hyperparameters
 from sklearn.ensemble import GradientBoostingRegressor
 
 #! 从这开始仔细看
 #%% Load previously trained model
-xgb_regressor_prev = load(regressor_NOD_filename)
+GBDT_regressor_prev = load(regressor_NOD_filename)
 
-xgb_best_parameters = load(xgb_train_parameter_NOD_filename)
+GBDT_best_parameters = load(GBDT_train_parameter_NOD_filename)
 
-print(f"The hyperparameters for the previous model are: {xgb_best_parameters}")
+print(f"The hyperparameters for the previous model are: {GBDT_best_parameters}")
 
-#%% xgb model training
+#%% GBDT model training
 #! 保证这边的hyperparameter 包含之前最好的参数
 X = df_with_dependents.drop(['NumberOfDependents','Index'], axis=1)  # Features
 
@@ -81,11 +81,11 @@ y = (df_with_dependents['NumberOfDependents'])  # Target
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=13)
 
 param_grid = {
-    'n_estimators': [600,700,800],
+    'n_estimators': [600],
     'learning_rate': [0.01],
     'max_depth': [5],
-    'colsample_bytree': [ 0.8],
-    'subsample': [0.4]
+    #'colsample_bytree': [ 0.8],
+    #'subsample': [0.4]
 }
 
 #? Previous parameter_grid
@@ -101,10 +101,10 @@ param_grid = {
 #! The colsample_bytree parameter in XGBoost is a hyperparameter that specifies the fraction of features (columns) to be randomly sampled for each tree. Before constructing each tree in the model, XGBoost randomly selects a subset of the features based on the colsample_bytree value. This is part of the model's built-in feature selection method to prevent overfitting and to add more randomness to the model fitting process.
 
 grid_search = GridSearchCV(
-    estimator=xgb.XGBRegressor(objective='reg:squarederror', random_state=42),
+    estimator=GradientBoostingRegressor(random_state=42),
     param_grid=param_grid,
     scoring='neg_mean_squared_error',
-    cv=6,
+    cv=3,
     verbose=2,
     n_jobs=-1
 )
@@ -115,11 +115,11 @@ grid_search.fit(X_train, y_train)
 
 #%% New model Best parameter set
 print("Best Hyper-parameters for training: ", grid_search.best_params_)
-xgb_regressor =  grid_search.best_estimator_
+GBDT_regressor =  grid_search.best_estimator_
 #%% Model prediction
 
-y_pred = xgb_regressor.predict(X_test) #New model
-y_pred_prev = xgb_regressor_prev.predict(X_test) #Old model
+y_pred = GBDT_regressor.predict(X_test) #New model
+y_pred_prev = GBDT_regressor_prev.predict(X_test) #Old model
 
 #%%
 # Compare two models
@@ -137,13 +137,14 @@ print(f'Old Model Mean Squared Error: {mse}')
 print("Old Model Mean Absolute Error:", mae)
 print("Old Model R-squared:", r2)
 
-
 #%% save the trained model
-#xgb_regressor = xgb_regressor_prev # use previous model
+#GBDT_regressor = GBDT_regressor_prev # use previous model
+regressor_NOD_filename = 'GBDT_regressor_NOD_V2.joblib'
+GBDT_train_parameter_NOD_filename = 'GBDT_train_parameter_NOD_V2.joblib'
 # Save the model
-dump(xgb_regressor, regressor_NOD_filename)
+dump(GBDT_regressor, regressor_NOD_filename)
 # Save the best parameters
-dump(grid_search.best_params_, xgb_train_parameter_NOD_filename)
+dump(grid_search.best_params_, GBDT_train_parameter_NOD_filename)
 
 #%% Prepare df_missing_dependents for prediction
 
@@ -151,7 +152,7 @@ dump(grid_search.best_params_, xgb_train_parameter_NOD_filename)
 X_missing = df_missing_dependents.drop(['NumberOfDependents','Index'], axis=1)
 
 # Use the trained model to predict 'NumberOfDependents' for the missing values dataset
-predicted_dependents = np.exp(xgb_regressor.predict(X_missing))
+predicted_dependents = np.exp(GBDT_regressor.predict(X_missing))
 
 # You can then add these predictions back to df_missing_dependents if you want to fill the missing values
 df_missing_dependents['NumberOfDependents'] = predicted_dependents
@@ -183,22 +184,22 @@ y[y <= 0] = 0.01 # replace all values that are 0 into 0.01
 y = np.log(y)
 
 #%% Load previously trained model
-xgb_regressor_prev = load(regressor_MI_filename)
-xgb_best_parameters = load(xgb_train_parameter_MI_filename)
+GBDT_regressor_prev = load(regressor_MI_filename)
+GBDT_best_parameters = load(GBDT_train_parameter_MI_filename)
 
-print(f"The hyperparameters for the previous model are: {xgb_best_parameters}")
+print(f"The hyperparameters for the previous model are: {GBDT_best_parameters}")
 
-#%% xgb model training
+#%% GBDT model training
 # Splitting the data with known MonthlyIncome for training and validation
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 
 param_grid = {
     'n_estimators': [500],
-    'learning_rate': [0.01,0.03],
-    'max_depth': [3,5],
-    'colsample_bytree': [ 0.8,1.0],
-    'subsample': [0.7,0.8]
+    'learning_rate': [0.01],
+    'max_depth': [3],
+    #'colsample_bytree': [ 0.8,1.0],
+    #'subsample': [0.7,0.8]
 }
 
 #param_grid = {
@@ -213,7 +214,7 @@ param_grid = {
 #! The colsample_bytree parameter in XGBoost is a hyperparameter that specifies the fraction of features (columns) to be randomly sampled for each tree. Before constructing each tree in the model, XGBoost randomly selects a subset of the features based on the colsample_bytree value. This is part of the model's built-in feature selection method to prevent overfitting and to add more randomness to the model fitting process.
 
 grid_search = GridSearchCV(
-    estimator=xgb.XGBRegressor(objective='reg:squarederror', random_state=42),
+    estimator=GradientBoostingRegressor(random_state=42),
     param_grid=param_grid,
     scoring='neg_mean_squared_error',
     cv=3,
@@ -227,11 +228,11 @@ grid_search.fit(X_train, y_train)
 
 #%% Best parameter set
 print("Best Hyper-parameters for training: ", grid_search.best_params_)
-xgb_regressor =  grid_search.best_estimator_
+GBDT_regressor =  grid_search.best_estimator_
 
 #%% Predict on the test set
-y_pred = xgb_regressor.predict(X_test)
-y_pred_prev = xgb_regressor_prev.predict(X_test)
+y_pred = GBDT_regressor.predict(X_test)
+y_pred_prev = GBDT_regressor_prev.predict(X_test)
 
 #%%
 # Evaluate the trained model
@@ -250,10 +251,13 @@ print("Old Model Mean Absolute Error:", mae)
 print("Old Model R-squared:", r2)
 #%% save the parameters 
 #! only save it if you are 100% sure it's better than previous model
+#GBDT_regressor = GBDT_regressor_prev # use previous model
+regressor_MI_filename = 'GBDT_regressor_MI_V2.joblib'
+GBDT_train_parameter_MI_filename = 'GBDT_train_parameter_MI_V2.joblib'
 # Save the model
-dump(xgb_regressor, regressor_MI_filename)
+dump(GBDT_regressor, regressor_MI_filename)
 # Save the best parameters
-dump(grid_search.best_params_, xgb_train_parameter_MI_filename)
+dump(grid_search.best_params_, GBDT_train_parameter_MI_filename)
 
 
 
@@ -263,7 +267,7 @@ dump(grid_search.best_params_, xgb_train_parameter_MI_filename)
 X_missing = df_missing_MonthlyIncome.drop(['MonthlyIncome','Index'], axis=1)
 
 # Use the trained model to predict 'NumberOfDependents' for the missing values dataset
-predicted_MonthlyIncome = np.exp(xgb_regressor.predict(X_missing))
+predicted_MonthlyIncome = np.exp(GBDT_regressor.predict(X_missing))
 
 # You can then add these predictions back to df_missing_dependents if you want to fill the missing values
 df_missing_MonthlyIncome['MonthlyIncome'] = predicted_MonthlyIncome

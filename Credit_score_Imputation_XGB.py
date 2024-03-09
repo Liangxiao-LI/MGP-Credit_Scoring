@@ -81,7 +81,7 @@ y = (df_with_dependents['NumberOfDependents'])  # Target
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=13)
 
 param_grid = {
-    'n_estimators': [600,700,800],
+    'n_estimators': [600],
     'learning_rate': [0.01],
     'max_depth': [5],
     'colsample_bytree': [ 0.8],
@@ -141,9 +141,9 @@ print("Old Model R-squared:", r2)
 #%% save the trained model
 #xgb_regressor = xgb_regressor_prev # use previous model
 # Save the model
-dump(xgb_regressor, regressor_NOD_filename)
+#dump(xgb_regressor, regressor_NOD_filename)
 # Save the best parameters
-dump(grid_search.best_params_, xgb_train_parameter_NOD_filename)
+#dump(grid_search.best_params_, xgb_train_parameter_NOD_filename)
 
 #%% Prepare df_missing_dependents for prediction
 
@@ -195,10 +195,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 param_grid = {
     'n_estimators': [500],
-    'learning_rate': [0.01,0.03],
-    'max_depth': [3,5],
-    'colsample_bytree': [ 0.8,1.0],
-    'subsample': [0.7,0.8]
+    'learning_rate': [0.03],
+    'max_depth': [5],
+    'colsample_bytree': [ 0.8],
+    'subsample': [0.8]
 }
 
 #param_grid = {
@@ -251,9 +251,9 @@ print("Old Model R-squared:", r2)
 #%% save the parameters 
 #! only save it if you are 100% sure it's better than previous model
 # Save the model
-dump(xgb_regressor, regressor_MI_filename)
+#dump(xgb_regressor, regressor_MI_filename)
 # Save the best parameters
-dump(grid_search.best_params_, xgb_train_parameter_MI_filename)
+#dump(grid_search.best_params_, xgb_train_parameter_MI_filename)
 
 
 
