@@ -1,5 +1,8 @@
-
 ![💰_Credit_Scoring (5)](https://github.com/BL-Starlord/MGP-Credit_Scoring/assets/81414955/81fda687-babd-4ecd-91b7-55a51175cf0e)
+
+![Static Badge](https://img.shields.io/badge/Contributors-blue?style=plastic&logoColor=blue)
+
+Jemma Moseley, Asiyah Sharif, Liangxiao LI, Binghan Shang, Troy Campbell
 
 ![Static Badge](https://img.shields.io/badge/Project_background%20-%20black?style=flat)
 
@@ -15,15 +18,7 @@ Develop a statistical model/algorithm which accurately predicts the probability 
 <img width="470" alt="Screenshot 2024-02-15 at 12 55 26 PM" src="https://github.com/BL-Starlord/MGP-Credit_Scoring/assets/81414955/053c72f4-5c09-4484-bf27-30f756465a8f">
 </p>
 
-![Static Badge](https://img.shields.io/badge/Contributors-blue?style=plastic&logoColor=blue)
 
-Data preprocessing: Jemma Moseley,Asiyah Sharif
-
-Missing value Imputation: Liangxiao LI
-
-Feature engineering: Binghan Shang
-
-Prediction model: Troy Campbell
 
 ![Static Badge](https://img.shields.io/badge/Imputation%20NA-red)
 
