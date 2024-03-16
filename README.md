@@ -6,7 +6,7 @@ Jemma Moseley, Asiyah Sharif, Liangxiao LI, Binghan Shang, Troy Campbell
 
 ![Static Badge](https://img.shields.io/badge/Project_background%20-%20black?style=flat)
 
-Credit scoring is a tool used by lenders (e.g. banks) to help decide whether one qualifies for a particular credit card, loan, mortgage or service. The credit score is a number everyone in the UK over 18 is given to indicate their credit worthiness. Each lender uses a different method to calculate their credit scores, which is related to the probability of default. The data set for this project provides information on 150,000 borrowers.
+Credit scoring is a tool used by lenders (e.g. banks) to help decide whether one qualify for a particular credit card, loan, mortgage or service. The credit score is a number everyone in the UK over 18 is given to indicate their credit worthiness. Each lender uses a different method to calculate their credit scores, which is related to the probability of default. The data set for this project provides information on 150,000 borrowers.
 
 ![Static Badge](https://img.shields.io/badge/Project%20Aim%20-%20black?style=flat)
 
